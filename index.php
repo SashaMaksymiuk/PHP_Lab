@@ -1,4 +1,5 @@
 <?php
+session_start();
 
 require_once 'layout/header.php';
 require_once 'layout/left_menu.php';
