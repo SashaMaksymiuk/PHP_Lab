@@ -40,12 +40,50 @@
             }
         }
 
+        // Якщо помилок немає — зберігаємо в базу і перенаправляємо
         if (empty($errors)) {
-            header('Location: index.php?action=registration_successful');
-            exit; 
+            
+            // Параметри підключення до MySQL 
+            $db_host = 'localhost';
+            $db_user = 'root'; // Стандартний логін у XAMPP
+            $db_pass = '';     // Стандартний пароль порожній
+            $db_name = 'chess_news_db'; // Назва бази, яку створили
+
+            // Створюємо підключення
+            $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+
+            // Перевіряємо, чи немає помилок підключення
+            if ($conn->connect_error) {
+                die("Помилка підключення до бази даних: " . $conn->connect_error);
+            }
+
+            // Хешування пароля 
+            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+
+            // Підготовка SQL-запиту 
+            $stmt = $conn->prepare("INSERT INTO users (login, password, email, address) VALUES (?, ?, ?, ?)");
+            
+            // Букви "ssss" означають, що ми передаємо 4 рядки 
+            $stmt->bind_param("ssss", $login, $hashed_password, $email, $address);
+
+            // Виконуємо запит
+            if ($stmt->execute()) {
+                // Якщо все добре, закриваємо з'єднання і йдемо на сторінку успіху
+                $stmt->close();
+                $conn->close();
+                header('Location: index.php?action=registration_successful');
+                exit;
+            } else {
+                // Якщо сталася помилка БД 
+                $errors[] = "Помилка при реєстрації: " . $conn->error;
+            }
+
+            $stmt->close();
+            $conn->close();
         }
     }
     ?>
+
 
     <?php if (!empty($errors)): ?>
         <div class="error-box">
@@ -86,3 +124,4 @@
         <button type="submit" class="btn-submit">Зареєструватися</button>
     </form>
 </main>
+
